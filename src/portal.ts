@@ -1,5 +1,4 @@
 import * as Three from "three"
-import { WebGLRenderTarget } from "three"
 
 export class Portal {
 
@@ -46,15 +45,17 @@ void main() {
     this.mesh = new Three.Mesh(Portal.geometry, this.material)
   }
 
+  static Width = 0.8
+  static Height = 1.5
+  
   static geometry: Three.Geometry =
-      new Three.PlaneGeometry(0.8, 1.5)
+      new Three.PlaneGeometry(Portal.Width, Portal.Height)
 
   mesh: Three.Mesh
-  renderTexture: WebGLRenderTarget
-  backTexture: WebGLRenderTarget
+  renderTexture: Three.WebGLRenderTarget
+  backTexture: Three.WebGLRenderTarget
   material: Three.ShaderMaterial
   camera: Three.PerspectiveCamera = new Three.PerspectiveCamera()
-  cameraHelper = new Three.CameraHelper(this.camera)
 
   portalTransform: Three.Matrix4 = new Three.Matrix4()
 
@@ -93,14 +94,47 @@ void main() {
     
     this.material.uniforms.map.value = this.backTexture.texture
   }
+
+  computeViewBoundingBox(playerCamera: Three.PerspectiveCamera, viewSize: Three.Vector2): Three.Box2 {
+    let points = [
+      new Three.Vector3(-Portal.Width / 2, -Portal.Height / 2, 0),
+      new Three.Vector3( Portal.Width / 2, -Portal.Height / 2, 0),
+      new Three.Vector3( Portal.Width / 2,  Portal.Height / 2, 0),
+      new Three.Vector3(-Portal.Width / 2,  Portal.Height / 2, 0),
+    ].map(p => this.mesh.localToWorld(p).project(playerCamera))
+
+    if(points.some(p => p.z > 1)) {
+      // Ugly, but i have no other ideas
+      return new Three.Box2(new Three.Vector2(0, 0), viewSize)
+    }
+    
+    let points2 = points.map(p =>
+          new Three.Vector2(p.x, p.y)
+            .addScalar(1.0)
+            .multiply(viewSize)
+            .multiplyScalar(0.5)
+            .clamp(new Three.Vector2(), viewSize))
+
+    const box = new Three.Box2()
+    box.setFromPoints(points2)
+    
+    return box
+  }
   
   render(playerCamera: Three.PerspectiveCamera, scene: Three.Scene, renderer: Three.WebGLRenderer): void {
     this.updateCamera(playerCamera)
     this.otherPortal.wall.visible = false
+
+    const scissorBox = this.computeViewBoundingBox(playerCamera, renderer.getSize(new Three.Vector2()))
     
+    const boxSize = scissorBox.getSize(new Three.Vector2())
     renderer.setRenderTarget(this.renderTexture)
+    renderer.setScissor(scissorBox.min.x, scissorBox.min.y, boxSize.x, boxSize.y)
+    renderer.setScissorTest(true)
+
     renderer.render(scene, this.camera)
     
+    renderer.setScissorTest(false)    
     renderer.setRenderTarget(null) // reset render target
     this.otherPortal.wall.visible = true
 
