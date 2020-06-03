@@ -1,6 +1,7 @@
 import * as Three from "three"
 
 import { Controls } from "./controls"
+import { Level, createLevel } from "./level"
 
 console.log("Hello, world!")
 
@@ -11,25 +12,47 @@ const renderer = new Three.WebGLRenderer()
 
 const controls = new Controls(camera)
 
+const initialLevel: Level = {
+  startPosition: new Three.Vector3(0, 0, 0),
+  blocks: [{
+    size: new Three.Vector3(10, 1, 10),
+    position: new Three.Vector3(0, -1, 0),
+    rotation: new Three.Quaternion()
+  }, {
+    size: new Three.Vector3(10, 1, 10),
+    position: new Three.Vector3(0, 3, 0),
+    rotation: new Three.Quaternion()
+  }, {
+    size: new Three.Vector3(10, 5, 1),
+    position: new Three.Vector3(0, 1, -5.5),
+    rotation: new Three.Quaternion()
+  }, {
+    size: new Three.Vector3(10, 5, 1),
+    position: new Three.Vector3(0, 1, 5.5),
+    rotation: new Three.Quaternion()
+  }, {
+    size: new Three.Vector3(1, 5, 10),
+    position: new Three.Vector3(-5.5, 1, 0),
+    rotation: new Three.Quaternion()
+  }, {
+    size: new Three.Vector3(1, 5, 10),
+    position: new Three.Vector3(5.5, 1, 0),
+    rotation: new Three.Quaternion()
+  }]
+}
+
 function init() {
   renderer.setSize(window.innerWidth, window.innerHeight)
   document.body.appendChild(renderer.domElement)
 
-  camera.position.set(0, 0, 0)
+  scene.add(new Three.AmbientLight(0xffffff, 0.1))
 
-  for (let i = 0; i < 16; i++) {
-    const alpha = i * 2 * Math.PI / 16
+  const pointLight = new Three.PointLight(0xffffff, 1.0)
+  pointLight.position.set(0, 2, 0)
+  scene.add(pointLight)
 
-    const color = new Three.Color()
-    color.setHSL(i / 16, 1.0, 0.5)
-
-    const cube = new Three.Mesh(
-      new Three.BoxGeometry(1, 1, 1),
-      new Three.MeshBasicMaterial({ color })
-    )
-    cube.position.set(Math.cos(alpha) * 10, 0, Math.sin(alpha) * 10)
-    scene.add(cube)
-  }
+  camera.position.copy(initialLevel.startPosition)
+  createLevel(initialLevel, scene)
 
   controls.install()
 
