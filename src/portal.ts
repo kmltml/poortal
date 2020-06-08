@@ -1,8 +1,13 @@
 import * as Three from "three"
+import { Debug } from "./debug"
+
+export enum PortalColor {
+  Orange, Blue
+}
 
 export class Portal {
 
-  constructor(public wall: Three.Mesh, mask: Three.Texture, overlay: Three.Texture) {
+  constructor(public wall: Three.Mesh, public color: PortalColor, mask: Three.Texture, overlay: Three.Texture, ) {
 
     this.renderTexture = new Three.WebGLRenderTarget(window.innerWidth, window.innerHeight)
     this.backTexture = new Three.WebGLRenderTarget(window.innerWidth, window.innerHeight)
@@ -103,10 +108,22 @@ void main() {
       new Three.Vector3(-Portal.Width / 2,  Portal.Height / 2, 0),
     ].map(p => this.mesh.localToWorld(p).project(playerCamera))
 
+    if (points.every(p => p.x > 1)
+      || points.every(p => p.x < -1)
+      || points.every(p => p.y > 1)
+      || points.every(p => p.y < -1)
+      || points.every(p => p.z > 1)
+      || points.every(p => p.z < -1)) {
+      const box = new Three.Box2()
+      box.empty()
+      return box
+    }
     if(points.some(p => p.z > 1)) {
       // Ugly, but i have no other ideas
       return new Three.Box2(new Three.Vector2(0, 0), viewSize)
     }
+
+    points.forEach(p => p.clamp(new Three.Vector3(-1, -1, -1), new Three.Vector3(1, 1, 1)))
     
     let points2 = points.map(p =>
           new Three.Vector2(p.x, p.y)
@@ -126,9 +143,15 @@ void main() {
     this.otherPortal.wall.visible = false
 
     const scissorBox = this.computeViewBoundingBox(playerCamera, renderer.getSize(new Three.Vector2()))
+    if (this.color == PortalColor.Blue) {
+      Debug.instance.portalVisibility.blue = !scissorBox.isEmpty()
+    } else {
+      Debug.instance.portalVisibility.orange = !scissorBox.isEmpty()
+    }
     
     const boxSize = scissorBox.getSize(new Three.Vector2())
     renderer.setRenderTarget(this.renderTexture)
+    renderer.clear()
     renderer.setScissor(scissorBox.min.x, scissorBox.min.y, boxSize.x, boxSize.y)
     renderer.setScissorTest(true)
 

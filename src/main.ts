@@ -2,7 +2,7 @@ import * as Three from "three"
 
 import { Controls } from "./controls"
 import { Level, createLevel } from "./level"
-import { Portal } from "./portal"
+import { Portal, PortalColor } from "./portal"
 
 console.log("Hello, world!")
 
@@ -68,13 +68,13 @@ function init() {
     <Three.Mesh> scene.children[4],
     new Three.Vector3(0, 0.25, -4.999),
     new Three.Vector3(0, 0, 1),
-    portalBlue
+    PortalColor.Blue
   )
   portals[1] = createPortal(
     <Three.Mesh> scene.children[6],
     new Three.Vector3(-4.999, 0.25, 0),
     new Three.Vector3(1, 0, 0),
-    portalOrange
+    PortalColor.Orange
   )
   portals[0].otherPortal = portals[1]
   portals[1].otherPortal = portals[0]
@@ -94,8 +94,9 @@ function init() {
   renderFrame()
 }
 
-function createPortal(wall: Three.Mesh, position: Three.Vector3, normal: Three.Vector3, border: Three.Texture): Portal {
-  const portal = new Portal(wall, portalMask, border)
+function createPortal(wall: Three.Mesh, position: Three.Vector3, normal: Three.Vector3, color: PortalColor): Portal {
+  const border = (color == PortalColor.Blue) ? portalBlue : portalOrange
+  const portal = new Portal(wall, color, portalMask, border)
   portal.mesh.position.copy(position)
   portal.mesh.setRotationFromAxisAngle(
     new Three.Vector3(0, 1, 0),
