@@ -18,6 +18,12 @@ const portalMask = textureLoader.load("tex/portal_mask.png")
 const portalBlue = textureLoader.load("tex/portal_blue.png")
 const portalOrange = textureLoader.load("tex/portal_orange.png")
 
+declare var Stats: any
+
+const stats = new Stats()
+stats.showPanel(0)
+document.body.appendChild(stats.dom)
+
 const initialLevel: Level = {
   startPosition: new Three.Vector3(0, 0, 0),
   blocks: [{
@@ -110,11 +116,16 @@ function createPortal(wall: Three.Mesh, position: Three.Vector3, normal: Three.V
 function renderFrame() {
   controls.update()
 
+  stats.begin()
+
   for (let portal of portals) {
     portal.render(camera, scene, renderer)
   }
 
   renderer.render(scene, camera)
+
+  stats.end()
+
   requestAnimationFrame(renderFrame)
 }
 

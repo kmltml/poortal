@@ -52,6 +52,7 @@ void main() {
 
   static Width = 0.8
   static Height = 1.5
+  static MaxDepth = 20
 
   static geometry: Three.Geometry =
       new Three.PlaneGeometry(Portal.Width, Portal.Height)
@@ -165,7 +166,7 @@ void main() {
 
       this.updateCamera(camera)
 
-      if (depth < 10) {
+      if (depth < Portal.MaxDepth) {
         const savedCamera = this.camera
         this.camera = this.camera.clone()
         rec(savedCamera, depth + 1, scissorBox)
