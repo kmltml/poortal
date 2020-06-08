@@ -5,6 +5,9 @@ export class Controls {
   orientation: Euler = new Euler(0, 0, 0, "ZYX")
   camera: Camera
   speed = 0.1
+  canvas: HTMLElement | null = null
+
+  pointerLocked = false
 
   private keys = {
     forward: false,
@@ -19,10 +22,13 @@ export class Controls {
     this.camera = camera
   }
 
-  install(): void {
+  install(canvas: HTMLElement): void {
     window.addEventListener("keydown", event => this.onKeyDown(event))
     window.addEventListener("keyup", event => this.onKeyUp(event))
     window.addEventListener("mousemove", event => this.onMouseMove(event))
+    canvas.addEventListener("click", _ => this.tryLock())
+    document.addEventListener("pointerlockchange", _ => this.onPointerLockChanged())
+    this.canvas = canvas
   }
 
   update(): void {
@@ -73,6 +79,7 @@ export class Controls {
   }
 
   onKeyDown(event: KeyboardEvent): void {
+    if (!this.pointerLocked) return
     switch(event.key) {
       case "w":
         this.keys.forward = true
@@ -90,6 +97,7 @@ export class Controls {
   }
 
   onKeyUp(event: KeyboardEvent): void {
+    if (!this.pointerLocked) return
     switch(event.key) {
       case "w":
         this.keys.forward = false
@@ -107,8 +115,27 @@ export class Controls {
   }
 
   onMouseMove(event: MouseEvent): void {
+    if (!this.pointerLocked) return
     this.mouseDelta = new Vector2(event.movementX, event.movementY)
   }
 
+  tryLock(): void {
+    this.canvas!.requestPointerLock()
+  }
+
+  onPointerLockChanged(): void {
+    if(document.pointerLockElement === this.canvas) {
+      console.log("Pointer locked")
+      this.pointerLocked = true
+    } else {
+      console.log("Pointer unlocked")
+      this.pointerLocked = false
+
+      this.keys.forward = false
+      this.keys.back = false
+      this.keys.left = false
+      this.keys.right = false
+    }
+  }
 
 }

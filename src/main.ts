@@ -9,7 +9,9 @@ console.log("Hello, world!")
 const scene = new Three.Scene()
 const camera = new Three.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 1000)
 
-const renderer = new Three.WebGLRenderer()
+const renderer = new Three.WebGLRenderer({
+  antialias: true
+})
 
 const controls = new Controls(camera)
 
@@ -68,7 +70,7 @@ function init() {
   camera.position.copy(initialLevel.startPosition)
   createLevel(initialLevel, scene)
 
-  controls.install()
+  controls.install(renderer.domElement)
 
   portals[0] = createPortal(
     <Three.Mesh> scene.children[4],
