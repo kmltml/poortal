@@ -66,14 +66,14 @@ function init() {
 
   portals[0] = createPortal(
     <Three.Mesh> scene.children[4],
-    new Three.Vector3(0, 0.25, -4.999),
+    new Three.Vector3(2.5, 0.25, -4.999),
     new Three.Vector3(0, 0, 1),
     PortalColor.Blue
   )
   portals[1] = createPortal(
-    <Three.Mesh> scene.children[6],
-    new Three.Vector3(-4.999, 0.25, 0),
-    new Three.Vector3(1, 0, 0),
+    <Three.Mesh> scene.children[5],
+    new Three.Vector3(2.5, 0.25, 4.999),
+    new Three.Vector3(0, 0, -1),
     PortalColor.Orange
   )
   portals[0].otherPortal = portals[1]
@@ -83,11 +83,11 @@ function init() {
     new Three.BoxGeometry(),
     [
       new Three.MeshBasicMaterial({color: "red"}),
-      new Three.MeshBasicMaterial({color: "red"}),
-      new Three.MeshBasicMaterial({color: "green"}),
       new Three.MeshBasicMaterial({color: "green"}),
       new Three.MeshBasicMaterial({color: "blue"}),
-      new Three.MeshBasicMaterial({color: "blue"}),
+      new Three.MeshBasicMaterial({color: "magenta"}),
+      new Three.MeshBasicMaterial({color: "cyan"}),
+      new Three.MeshBasicMaterial({color: "yellow"}),
     ]
   ))
 

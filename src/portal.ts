@@ -52,7 +52,7 @@ void main() {
 
   static Width = 0.8
   static Height = 1.5
-  
+
   static geometry: Three.Geometry =
       new Three.PlaneGeometry(Portal.Width, Portal.Height)
 
@@ -86,7 +86,7 @@ void main() {
   updateCamera(playerCamera: Three.PerspectiveCamera): void {
     this.camera.copy(playerCamera)
 
-    
+
 
     this.camera.applyMatrix4(this.portalTransform)
   }
@@ -96,11 +96,12 @@ void main() {
     const temp = this.backTexture
     this.backTexture = this.renderTexture
     this.renderTexture = temp
-    
+
     this.material.uniforms.map.value = this.backTexture.texture
   }
 
   computeViewBoundingBox(playerCamera: Three.PerspectiveCamera, viewSize: Three.Vector2): Three.Box2 {
+    playerCamera.updateMatrixWorld()
     let points = [
       new Three.Vector3(-Portal.Width / 2, -Portal.Height / 2, 0),
       new Three.Vector3( Portal.Width / 2, -Portal.Height / 2, 0),
@@ -115,7 +116,7 @@ void main() {
       || points.every(p => p.z > 1)
       || points.every(p => p.z < -1)) {
       const box = new Three.Box2()
-      box.empty()
+      box.makeEmpty()
       return box
     }
     if(points.some(p => p.z > 1)) {
@@ -124,7 +125,7 @@ void main() {
     }
 
     points.forEach(p => p.clamp(new Three.Vector3(-1, -1, -1), new Three.Vector3(1, 1, 1)))
-    
+
     let points2 = points.map(p =>
           new Three.Vector2(p.x, p.y)
             .addScalar(1.0)
@@ -134,34 +135,61 @@ void main() {
 
     const box = new Three.Box2()
     box.setFromPoints(points2)
-    
+
     return box
   }
-  
+
   render(playerCamera: Three.PerspectiveCamera, scene: Three.Scene, renderer: Three.WebGLRenderer): void {
-    this.updateCamera(playerCamera)
-    this.otherPortal.wall.visible = false
+    const rec = (camera: Three.PerspectiveCamera, depth: number, box?: Three.Box2) => {
+      if (this.color == PortalColor.Blue) {
+        Debug.instance.portalDepth.blue = depth
+      } else {
+        Debug.instance.portalDepth.orange = depth
+      }
 
-    const scissorBox = this.computeViewBoundingBox(playerCamera, renderer.getSize(new Three.Vector2()))
-    if (this.color == PortalColor.Blue) {
-      Debug.instance.portalVisibility.blue = !scissorBox.isEmpty()
-    } else {
-      Debug.instance.portalVisibility.orange = !scissorBox.isEmpty()
+      const scissorBox = this.computeViewBoundingBox(camera, renderer.getSize(new Three.Vector2()))
+
+      if (box) {
+        scissorBox.intersect(box)
+      }
+
+      if (scissorBox.isEmpty()) {
+        return;
+      }
+
+      const boxSize = scissorBox.getSize(new Three.Vector2())
+
+      if (boxSize.x < 2.0 || boxSize.y < 2.0) {
+        return
+      }
+
+      this.updateCamera(camera)
+
+      if (depth < 10) {
+        const savedCamera = this.camera
+        this.camera = this.camera.clone()
+        rec(savedCamera, depth + 1, scissorBox)
+        this.camera = savedCamera
+      }
+
+      renderer.setRenderTarget(this.renderTexture)
+      renderer.clear()
+      renderer.setScissor(scissorBox.min.x, scissorBox.min.y, boxSize.x, boxSize.y)
+      renderer.setScissorTest(true)
+
+      this.otherPortal.wall.visible = false
+
+      renderer.render(scene, this.camera)
+
+      this.otherPortal.wall.visible = true
+
+      renderer.setScissorTest(false)
+      renderer.setRenderTarget(null) // reset render target
+
+      this.swapTargets()
     }
-    
-    const boxSize = scissorBox.getSize(new Three.Vector2())
-    renderer.setRenderTarget(this.renderTexture)
-    renderer.clear()
-    renderer.setScissor(scissorBox.min.x, scissorBox.min.y, boxSize.x, boxSize.y)
-    renderer.setScissorTest(true)
 
-    renderer.render(scene, this.camera)
-    
-    renderer.setScissorTest(false)    
-    renderer.setRenderTarget(null) // reset render target
-    this.otherPortal.wall.visible = true
-
-    this.swapTargets()
+    rec(playerCamera, 0)
   }
 
 }

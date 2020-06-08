@@ -7,12 +7,12 @@ export class Debug {
   gui: dat.GUI = new dat.GUI()
 
   folders = {
-    portalVisibility: this.gui.addFolder("Portal Visibility")
+    portalDepth: this.gui.addFolder("Portal Depth")
   }
 
-  portalVisibility = {
-    blue: false,
-    orange: false
+  portalDepth = {
+    blue: 0,
+    orange: 0
   }
 
   static get instance(): Debug {
@@ -23,8 +23,9 @@ export class Debug {
   }
 
   constructor() {
-    this.folders.portalVisibility.add(this.portalVisibility, "blue").listen()
-    this.folders.portalVisibility.add(this.portalVisibility, "orange").listen()
+    this.folders.portalDepth.add(this.portalDepth, "blue").listen()
+    this.folders.portalDepth.add(this.portalDepth, "orange").listen()
+    this.folders.portalDepth.open()
     this.gui.show()
   }
 
