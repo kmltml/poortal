@@ -4,7 +4,7 @@ export class Controls {
 
   orientation: Euler = new Euler(0, 0, 0, "ZYX")
   camera: Camera
-  speed = 2.0
+  speed = 3.0
   canvas: HTMLElement | null = null
 
   pointerLocked = false

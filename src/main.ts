@@ -4,12 +4,15 @@ import { Level, createLevel } from "./level"
 import { Portal, PortalColor } from "./portal"
 import { Physics } from "./physics"
 import { Player } from "./player"
+import { Hud } from "./hud"
 
 export const scene = new Three.Scene()
 
 export const renderer = new Three.WebGLRenderer({
   antialias: true
 })
+
+renderer.autoClear = false
 
 export const player = new Player(scene)
 export const physics = new Physics()
@@ -21,6 +24,8 @@ const portalMask = textureLoader.load("tex/portal_mask.png")
 const portalBlue = textureLoader.load("tex/portal_blue.png")
 const portalOrange = textureLoader.load("tex/portal_orange.png")
 
+export const hud = new Hud(renderer, textureLoader)
+
 declare var Stats: any
 
 const stats = new Stats()
@@ -28,7 +33,7 @@ stats.showPanel(0)
 document.body.appendChild(stats.dom)
 
 const initialLevel: Level = {
-  startPosition: new Three.Vector3(0, 0, 0),
+  startPosition: new Three.Vector3(0, 1, 0),
   blocks: [{
     size: new Three.Vector3(10, 1, 10),
     position: new Three.Vector3(0, -1, 0),
@@ -123,11 +128,15 @@ function renderFrame() {
 
   stats.begin()
 
+  renderer.clear()
+
   for (let portal of portals) {
     portal.render(player.camera, scene, renderer)
   }
 
   renderer.render(scene, player.camera)
+
+  hud.render(renderer)
 
   stats.end()
 

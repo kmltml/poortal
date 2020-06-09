@@ -29,7 +29,7 @@ export class Player implements PhysicalObject {
     this.camera.position.set(0, Player.CameraHeight - Player.CollisionHeight / 2, 0)
     this.mesh.add(this.camera)
 
-    this.mesh.add(this.helper)
+    // this.mesh.add(this.helper)
     scene.add(this.mesh)
 
     this.controls = new Controls(this.camera)
