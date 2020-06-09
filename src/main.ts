@@ -20,9 +20,11 @@ export const physics = new Physics()
 player.initPhysics(physics)
 
 const textureLoader = new Three.TextureLoader()
-const portalMask = textureLoader.load("tex/portal_mask.png")
-const portalBlue = textureLoader.load("tex/portal_blue.png")
-const portalOrange = textureLoader.load("tex/portal_orange.png")
+Portal.textures = {
+  mask: textureLoader.load("tex/portal_mask.png"),
+  blueBorder: textureLoader.load("tex/portal_blue.png"),
+  orangeBorder: textureLoader.load("tex/portal_orange.png")
+}
 
 export const hud = new Hud(renderer, textureLoader)
 
@@ -61,8 +63,6 @@ const initialLevel: Level = {
   }]
 }
 
-const portals: Portal[] = []
-
 function init() {
   renderer.setSize(window.innerWidth, window.innerHeight)
   document.body.appendChild(renderer.domElement)
@@ -78,20 +78,25 @@ function init() {
 
   player.controls.install(renderer.domElement)
 
-  portals[0] = createPortal(
+  player.portals[PortalColor.Blue] = Portal.create(
     <Three.Mesh> scene.children[5],
     new Three.Vector3(2.5, Portal.Height / 2 - 0.5, -4.999),
     new Three.Vector3(0, 0, 1),
+    new Three.Vector3(0, 1, 0),
     PortalColor.Blue
   )
-  portals[1] = createPortal(
+  player.portals[PortalColor.Orange] = Portal.create(
     <Three.Mesh> scene.children[6],
     new Three.Vector3(2.5, Portal.Height / 2 - 0.5, 4.999),
     new Three.Vector3(0, 0, -1),
+    new Three.Vector3(0, 1, 0),
     PortalColor.Orange
   )
-  portals[0].otherPortal = portals[1]
-  portals[1].otherPortal = portals[0]
+  player.portals[0].otherPortal = player.portals[1]
+  player.portals[1].otherPortal = player.portals[0]
+
+  scene.add(player.portals[0].mesh)
+  scene.add(player.portals[1].mesh)
 
   scene.add(new Three.Mesh(
     new Three.BoxGeometry(),
@@ -108,19 +113,6 @@ function init() {
   renderFrame()
 }
 
-function createPortal(wall: Three.Mesh, position: Three.Vector3, normal: Three.Vector3, color: PortalColor): Portal {
-  const border = (color == PortalColor.Blue) ? portalBlue : portalOrange
-  const portal = new Portal(wall, color, portalMask, border)
-  portal.mesh.position.copy(position)
-  portal.mesh.setRotationFromAxisAngle(
-    new Three.Vector3(0, 1, 0),
-    new Three.Vector3(0, 0, 1).angleTo(normal)
-  )
-  scene.add(portal.mesh)
-
-  return portal
-}
-
 function renderFrame() {
   player.update()
 
@@ -130,7 +122,7 @@ function renderFrame() {
 
   renderer.clear()
 
-  for (let portal of portals) {
+  for (let portal of player.portals) {
     portal.render(player.camera, scene, renderer)
   }
 

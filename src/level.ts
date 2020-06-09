@@ -28,6 +28,7 @@ export function createLevel(level: Level, root: Object3D, physics: Physics): voi
 
   for (let block of level.blocks) {
     const mesh = new Mesh(blockGeo, blockMaterial)
+    mesh.userData.canAcceptPortals = true
     mesh.scale.copy(block.size)
     mesh.position.copy(block.position)
     mesh.setRotationFromQuaternion(block.rotation)

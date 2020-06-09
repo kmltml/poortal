@@ -7,6 +7,25 @@ export enum PortalColor {
 
 export class Portal {
 
+  static textures: {
+    blueBorder: Three.Texture
+    orangeBorder: Three.Texture
+    mask: Three.Texture
+  }
+
+  static create(wall: Three.Mesh, position: Three.Vector3, normal: Three.Vector3, up: Three.Vector3, color: PortalColor): Portal {
+    const border = (color == PortalColor.Blue) ? Portal.textures.blueBorder : Portal.textures.orangeBorder
+    const portal = new Portal(wall, color, Portal.textures.mask, border)
+    portal.mesh.position.copy(position)
+
+    up.projectOnPlane(normal).normalize()
+    const trans = new Three.Matrix4()
+    trans.makeBasis(up.clone().cross(normal), up, normal)
+    portal.mesh.setRotationFromMatrix(trans)
+
+    return portal
+  }
+
   constructor(public wall: Three.Mesh, public color: PortalColor, mask: Three.Texture, overlay: Three.Texture, ) {
 
     this.renderTexture = new Three.WebGLRenderTarget(window.innerWidth, window.innerHeight)

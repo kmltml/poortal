@@ -16,6 +16,21 @@ export class Controls {
     right: false
   }
 
+  private buttons = {
+    left: false,
+    right: false
+  }
+
+  private previousButtons = {
+    left: false,
+    right: false
+  }
+
+  justPressed = {
+    left: false,
+    right: false
+  }
+
   moveVec: Vector3 = new Vector3()
 
   private mouseDelta: Vector2 = new Vector2()
@@ -28,6 +43,8 @@ export class Controls {
     window.addEventListener("keydown", event => this.onKeyDown(event))
     window.addEventListener("keyup", event => this.onKeyUp(event))
     window.addEventListener("mousemove", event => this.onMouseMove(event))
+    window.addEventListener("mousedown", event => this.onMouseDown(event))
+    window.addEventListener("mouseup", event => this.onMouseUp(event))
     canvas.addEventListener("click", _ => this.tryLock())
     document.addEventListener("pointerlockchange", _ => this.onPointerLockChanged())
     this.canvas = canvas
@@ -66,6 +83,22 @@ export class Controls {
     this.mouseDelta.set(0, 0)
 
     this.camera.setRotationFromEuler(this.orientation)
+
+
+    if (this.buttons.left && !this.previousButtons.left) {
+      this.justPressed.left = true
+    } else {
+      this.justPressed.left = false
+    }
+
+    if (this.buttons.right && !this.previousButtons.right) {
+      this.justPressed.right = true
+    } else {
+      this.justPressed.right = false
+    }
+
+    this.previousButtons.left = this.buttons.left
+    this.previousButtons.right = this.buttons.right
   }
 
   forwardDirection(): Vector3 {
@@ -121,8 +154,28 @@ export class Controls {
     this.mouseDelta = new Vector2(event.movementX, event.movementY)
   }
 
+  onMouseDown(event: MouseEvent): void {
+    if (!this.pointerLocked) return
+    if (event.button === 0) {
+      this.buttons.left = true
+    } else if (event.button === 2) {
+      this.buttons.right = true
+    }
+  }
+
+  onMouseUp(event: MouseEvent): void {
+    if (!this.pointerLocked) return
+    if (event.button === 0) {
+      this.buttons.left = false
+    } else if (event.button === 2) {
+      this.buttons.right = false
+    }
+  }
+
   tryLock(): void {
-    this.canvas!.requestPointerLock()
+    if (!this.pointerLocked) {
+      this.canvas!.requestPointerLock()
+    }
   }
 
   onPointerLockChanged(): void {
