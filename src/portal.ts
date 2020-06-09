@@ -50,8 +50,8 @@ void main() {
     this.mesh = new Three.Mesh(Portal.geometry, this.material)
   }
 
-  static Width = 0.8
-  static Height = 1.5
+  static Width = 1.0
+  static Height = 2.0
   static MaxDepth = 20
 
   static geometry: Three.Geometry =
@@ -86,8 +86,7 @@ void main() {
 
   updateCamera(playerCamera: Three.PerspectiveCamera): void {
     this.camera.copy(playerCamera)
-
-
+    playerCamera.getWorldPosition(this.camera.position)
 
     this.camera.applyMatrix4(this.portalTransform)
   }

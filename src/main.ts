@@ -1,19 +1,20 @@
 import * as Three from "three"
 
-import { Controls } from "./controls"
 import { Level, createLevel } from "./level"
 import { Portal, PortalColor } from "./portal"
+import { Physics } from "./physics"
+import { Player } from "./player"
 
-console.log("Hello, world!")
+export const scene = new Three.Scene()
 
-const scene = new Three.Scene()
-const camera = new Three.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 1000)
-
-const renderer = new Three.WebGLRenderer({
+export const renderer = new Three.WebGLRenderer({
   antialias: true
 })
 
-const controls = new Controls(camera)
+export const player = new Player(scene)
+export const physics = new Physics()
+
+player.initPhysics(physics)
 
 const textureLoader = new Three.TextureLoader()
 const portalMask = textureLoader.load("tex/portal_mask.png")
@@ -67,20 +68,20 @@ function init() {
   pointLight.position.set(0, 2, 0)
   scene.add(pointLight)
 
-  camera.position.copy(initialLevel.startPosition)
-  createLevel(initialLevel, scene)
+  player.setPosition(initialLevel.startPosition)
+  createLevel(initialLevel, scene, physics)
 
-  controls.install(renderer.domElement)
+  player.controls.install(renderer.domElement)
 
   portals[0] = createPortal(
-    <Three.Mesh> scene.children[4],
-    new Three.Vector3(2.5, 0.25, -4.999),
+    <Three.Mesh> scene.children[5],
+    new Three.Vector3(2.5, Portal.Height / 2 - 0.5, -4.999),
     new Three.Vector3(0, 0, 1),
     PortalColor.Blue
   )
   portals[1] = createPortal(
-    <Three.Mesh> scene.children[5],
-    new Three.Vector3(2.5, 0.25, 4.999),
+    <Three.Mesh> scene.children[6],
+    new Three.Vector3(2.5, Portal.Height / 2 - 0.5, 4.999),
     new Three.Vector3(0, 0, -1),
     PortalColor.Orange
   )
@@ -116,15 +117,17 @@ function createPortal(wall: Three.Mesh, position: Three.Vector3, normal: Three.V
 }
 
 function renderFrame() {
-  controls.update()
+  player.update()
+
+  physics.update()
 
   stats.begin()
 
   for (let portal of portals) {
-    portal.render(camera, scene, renderer)
+    portal.render(player.camera, scene, renderer)
   }
 
-  renderer.render(scene, camera)
+  renderer.render(scene, player.camera)
 
   stats.end()
 

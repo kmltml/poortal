@@ -5,8 +5,10 @@ export default {
   output: {
     file: 'out/bundle.js',
     format: 'iife',
+    name: "poortal",
     globals: {
-      "three": "THREE"
+      "three": "THREE",
+      "@cocos/cannon": "CANNON"
     }
   },
   plugins: [commonjs()]

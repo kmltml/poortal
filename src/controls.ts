@@ -4,7 +4,7 @@ export class Controls {
 
   orientation: Euler = new Euler(0, 0, 0, "ZYX")
   camera: Camera
-  speed = 0.1
+  speed = 2.0
   canvas: HTMLElement | null = null
 
   pointerLocked = false
@@ -15,6 +15,8 @@ export class Controls {
     left: false,
     right: false
   }
+
+  moveVec: Vector3 = new Vector3()
 
   private mouseDelta: Vector2 = new Vector2()
 
@@ -52,8 +54,8 @@ export class Controls {
     const posChange = new Vector2(dx, dz).normalize()
     posChange.multiplyScalar(this.speed)
 
-    this.camera.position.add(this.forwardDirection().multiplyScalar(posChange.y))
-    this.camera.position.add(this.rightDirection().multiplyScalar(posChange.x))
+    this.moveVec.copy(this.forwardDirection().multiplyScalar(posChange.y));
+    this.moveVec.add(this.rightDirection().multiplyScalar(posChange.x))
 
     this.mouseDelta.multiplyScalar(0.01)
 

@@ -7,12 +7,17 @@ export class Debug {
   gui: dat.GUI = new dat.GUI()
 
   folders = {
-    portalDepth: this.gui.addFolder("Portal Depth")
+    portalDepth: this.gui.addFolder("Portal Depth"),
+    player: this.gui.addFolder("Player")
   }
 
   portalDepth = {
     blue: 0,
     orange: 0
+  }
+
+  player = {
+    speed: 0.1
   }
 
   static get instance(): Debug {
@@ -26,6 +31,10 @@ export class Debug {
     this.folders.portalDepth.add(this.portalDepth, "blue").listen()
     this.folders.portalDepth.add(this.portalDepth, "orange").listen()
     this.folders.portalDepth.open()
+
+    this.folders.player.add(this.player, "speed").listen()
+    this.folders.player.open()
+
     this.gui.show()
   }
 

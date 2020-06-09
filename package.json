@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@cocos/cannon": "^1.1.0",
     "three": "^0.116.1"
   },
   "devDependencies": {
