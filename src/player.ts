@@ -68,7 +68,18 @@ export class Player implements PhysicalObject {
   openPortal(color: PortalColor) {
     const caster = new Three.Raycaster()
     caster.setFromCamera({x: 0, y: 0}, this.camera)
+
+    if (this.portals[color]) {
+      // Allow slight repositioning of portals
+      this.portals[color].mesh.layers.disable(0)
+    }
+
     const intersects = caster.intersectObjects(this.scene.children)
+
+    if (this.portals[color]) {
+      this.portals[color].mesh.layers.enable(0)
+    }
+
     if (intersects.length != 0) {
       const wall = intersects[0]
       console.dir(wall)
