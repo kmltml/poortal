@@ -16,8 +16,7 @@ export class Hud {
 
   constructor(renderer: Three.WebGLRenderer, textureLoader: Three.TextureLoader) {
     const size = renderer.getSize(new Three.Vector2())
-    const aspect = size.y / size.x
-    this.camera = new Three.OrthographicCamera(-1, 1, -aspect, aspect, 0, 1)
+    this.camera = new Three.OrthographicCamera(-size.x / 2, size.x / 2, -size.y / 2, size.y / 2, 0, 1)
 
     this.textures = {
       crosshair: textureLoader.load("tex/hud/crosshair.png")
@@ -32,7 +31,7 @@ export class Hud {
       })
     )
     this.crosshair.position.set(0, 0, 0)
-    this.crosshair.scale.set(0.05, 0.05, 1.0)
+    this.crosshair.scale.set(32, 32, 1.0)
     this.scene.add(this.crosshair)
 
   }

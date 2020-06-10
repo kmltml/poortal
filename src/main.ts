@@ -13,6 +13,7 @@ export const renderer = new Three.WebGLRenderer({
 })
 
 renderer.autoClear = false
+renderer.setSize(window.innerWidth, window.innerHeight)
 
 export const player = new Player(scene)
 export const physics = new Physics()
@@ -64,7 +65,6 @@ const initialLevel: Level = {
 }
 
 function init() {
-  renderer.setSize(window.innerWidth, window.innerHeight)
   document.body.appendChild(renderer.domElement)
 
   scene.add(new Three.AmbientLight(0xffffff, 0.1))
