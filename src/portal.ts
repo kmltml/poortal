@@ -79,6 +79,9 @@ void main() {
 `
     })
     this.mesh = new Three.Mesh(Portal.geometry, this.material)
+    const lightColor = color == PortalColor.Blue ? 0x00bfff : 0xffbd00
+    const light = new Three.PointLight(lightColor, 0.3, 3)
+    this.mesh.add(light)
   }
 
   static Width = 1.0
