@@ -14,6 +14,7 @@ export const renderer = new Three.WebGLRenderer({
 
 renderer.autoClear = false
 renderer.setSize(window.innerWidth, window.innerHeight)
+renderer.clippingPlanes = [new Three.Plane()]
 
 export const player = new Player(scene)
 export const physics = new Physics()
@@ -36,7 +37,7 @@ stats.showPanel(0)
 document.body.appendChild(stats.dom)
 
 const initialLevel: Level = {
-  startPosition: new Three.Vector3(0, 1, 0),
+  startPosition: new Three.Vector3(-2, 1, 0),
   blocks: [{
     size: new Three.Vector3(10, 1, 10),
     position: new Three.Vector3(0, -1, 0),
@@ -61,6 +62,10 @@ const initialLevel: Level = {
     size: new Three.Vector3(1, 5, 10),
     position: new Three.Vector3(5.5, 1, 0),
     rotation: new Three.Quaternion()
+  }, {
+    size: new Three.Vector3(1, 5, 5),
+    position: new Three.Vector3(0, 1, 0),
+    rotation: new Three.Quaternion()
   }]
 }
 
@@ -69,9 +74,13 @@ function init() {
 
   scene.add(new Three.AmbientLight(0xffffff, 0.1))
 
-  const pointLight = new Three.PointLight(0xffffff, 1.0)
-  pointLight.position.set(0, 2, 0)
+  const pointLight = new Three.PointLight(0xffffff, 0.5)
+  pointLight.position.set(-4, 2, -4)
   scene.add(pointLight)
+
+  const pointLight2 = new Three.PointLight(0xffffff, 0.5)
+  pointLight2.position.set(4, 2, 4)
+  scene.add(pointLight2)
 
   player.setPosition(initialLevel.startPosition)
   createLevel(initialLevel, scene, physics)
@@ -98,18 +107,6 @@ function init() {
   scene.add(player.portals[0].mesh)
   scene.add(player.portals[1].mesh)
 
-  scene.add(new Three.Mesh(
-    new Three.BoxGeometry(),
-    [
-      new Three.MeshBasicMaterial({color: "red"}),
-      new Three.MeshBasicMaterial({color: "green"}),
-      new Three.MeshBasicMaterial({color: "blue"}),
-      new Three.MeshBasicMaterial({color: "magenta"}),
-      new Three.MeshBasicMaterial({color: "cyan"}),
-      new Three.MeshBasicMaterial({color: "yellow"}),
-    ]
-  ))
-
   renderFrame()
 }
 
@@ -125,6 +122,16 @@ function renderFrame() {
   for (let portal of player.portals) {
     portal.render(player.camera, scene, renderer)
   }
+
+  // Thankfully zero normal is treated as "Don't clip anything",
+  // so i don't have to invent an arbitrary plane that won't clip anything.
+  // Adding and removing a clipping plane each frame makes everything grind to a halt.
+  // That's why we keep a clipping plane around all the time.
+  ;(renderer.clippingPlanes[0] as Three.Plane)
+     .setFromNormalAndCoplanarPoint(
+       new Three.Vector3(0, 0, 0),
+       new Three.Vector3(0, 0, 0)
+     )
 
   renderer.render(scene, player.camera)
 

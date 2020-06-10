@@ -88,7 +88,7 @@ export class Player implements PhysicalObject {
       }
 
       const pos = wall.point
-      pos.add(wall.face!.normal.clone().multiplyScalar(0.0001))
+      pos.add(wall.face!.normal.clone().multiplyScalar(0.001))
       const up = new Three.Vector3(0, 1, 0)
         .applyQuaternion(this.camera.quaternion)
         .multiplyScalar(wall.face!.normal.y)

@@ -163,6 +163,14 @@ void main() {
     return box
   }
 
+  getClippingPlane(plane: Three.Plane = new Three.Plane()): Three.Plane {
+    plane.setFromNormalAndCoplanarPoint(
+      this.mesh.getWorldDirection(new Three.Vector3()),
+      this.mesh.getWorldPosition(new Three.Vector3())
+    )
+    return plane
+  }
+
   render(playerCamera: Three.PerspectiveCamera, scene: Three.Scene, renderer: Three.WebGLRenderer): void {
     const rec = (camera: Three.PerspectiveCamera, depth: number, box?: Three.Box2) => {
       if (this.color == PortalColor.Blue) {
@@ -194,6 +202,9 @@ void main() {
         this.camera = this.camera.clone()
         rec(savedCamera, depth + 1, scissorBox)
         this.camera = savedCamera
+      } else {
+        renderer.setRenderTarget(this.backTexture)
+        renderer.clear()
       }
 
       renderer.setRenderTarget(this.renderTexture)
@@ -201,19 +212,17 @@ void main() {
       renderer.setScissor(scissorBox.min.x, scissorBox.min.y, boxSize.x, boxSize.y)
       renderer.setScissorTest(true)
 
-      this.otherPortal.wall.visible = false
-
       renderer.render(scene, this.camera)
 
-      this.otherPortal.wall.visible = true
-
       renderer.setScissorTest(false)
-      renderer.setRenderTarget(null) // reset render target
 
       this.swapTargets()
     }
 
+    this.otherPortal.getClippingPlane(renderer.clippingPlanes[0])
     rec(playerCamera, 0)
+    renderer.setRenderTarget(null) // reset render target
+
   }
 
 }
