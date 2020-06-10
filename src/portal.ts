@@ -38,19 +38,25 @@ export class Portal {
 
     this.material = new Three.ShaderMaterial({
       transparent: true,
+      clipping: true,
       uniforms: {
         map: { value: this.backTexture.texture },
         mask: { value: mask },
         overlay: { value: overlay },
-        resolution: { value: new Three.Vector2(window.innerWidth, window.innerHeight) }
+        resolution: { value: new Three.Vector2(window.innerWidth, window.innerHeight) },
+        uvTransform: { value: new Three.Matrix3() }
       },
+      defines: { "USE_UV": "" },
       vertexShader:
 `
-varying vec2 texCoords;
+#include <clipping_planes_pars_vertex>
+#include <uv_pars_vertex>
 
 void main() {
-  texCoords = uv;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+  #include <begin_vertex>
+  #include <uv_vertex>
+  #include <project_vertex>
+  #include <clipping_planes_vertex>
 }
 `,
       fragmentShader:
@@ -60,13 +66,14 @@ uniform sampler2D mask;
 uniform sampler2D overlay;
 uniform vec2 resolution;
 
-
-varying vec2 texCoords;
+#include <clipping_planes_pars_fragment>
+#include <uv_pars_fragment>
 
 void main() {
-  float mask_val = texture2D(mask, texCoords).r;
+  #include <clipping_planes_fragment>
+  float mask_val = texture2D(mask, vUv).r;
   gl_FragColor = texture2D(map, gl_FragCoord.xy / resolution) * mask_val;
-  vec4 overlay_texel = texture2D(overlay, texCoords);
+  vec4 overlay_texel = texture2D(overlay, vUv);
   gl_FragColor = mix(gl_FragColor, overlay_texel, overlay_texel.a);
 }
 `
