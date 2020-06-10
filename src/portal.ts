@@ -18,6 +18,11 @@ export class Portal {
     const portal = new Portal(wall, color, Portal.textures.mask, border)
     portal.mesh.position.copy(position)
 
+    if (normal.distanceToSquared(new Three.Vector3(0, 1, 0)) > 0.001 &&
+      normal.distanceToSquared(new Three.Vector3(0, -1, 0)) > 0.001) {
+      up.set(0, 1, 0) // Only rotate to face away from player on horizontal surfaces
+    }
+
     up.projectOnPlane(normal).normalize()
     const trans = new Three.Matrix4()
     trans.makeBasis(up.clone().cross(normal), up, normal)
