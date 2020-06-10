@@ -13,7 +13,12 @@ export class Controls {
     forward: false,
     back: false,
     left: false,
-    right: false
+    right: false,
+    jump: false
+  }
+
+  private previousKeys = {
+    jump: false
   }
 
   private buttons = {
@@ -32,6 +37,8 @@ export class Controls {
   }
 
   moveVec: Vector3 = new Vector3()
+
+  jump: boolean = false
 
   private mouseDelta: Vector2 = new Vector2()
 
@@ -84,18 +91,11 @@ export class Controls {
 
     this.camera.setRotationFromEuler(this.orientation)
 
+    this.jump = this.keys.jump && !this.previousKeys.jump
+    this.previousKeys.jump = this.keys.jump
 
-    if (this.buttons.left && !this.previousButtons.left) {
-      this.justPressed.left = true
-    } else {
-      this.justPressed.left = false
-    }
-
-    if (this.buttons.right && !this.previousButtons.right) {
-      this.justPressed.right = true
-    } else {
-      this.justPressed.right = false
-    }
+    this.justPressed.left = this.buttons.left && !this.previousButtons.left
+    this.justPressed.right = this.buttons.right && !this.previousButtons.right
 
     this.previousButtons.left = this.buttons.left
     this.previousButtons.right = this.buttons.right
@@ -128,6 +128,9 @@ export class Controls {
       case "d":
         this.keys.right = true
         break
+      case " ":
+        this.keys.jump = true
+        break
     }
   }
 
@@ -145,6 +148,9 @@ export class Controls {
         break
       case "d":
         this.keys.right = false
+        break
+      case " ":
+        this.keys.jump = false
         break
     }
   }

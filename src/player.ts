@@ -53,16 +53,18 @@ export class Player implements PhysicalObject {
     this.controls.update()
 
     if (this.controls.justPressed.left) {
-      console.log("open left")
       this.openPortal(PortalColor.Blue)
     }
     if (this.controls.justPressed.right) {
-      console.log("open right")
       this.openPortal(PortalColor.Orange)
     }
 
     this.body.velocity.x = this.controls.moveVec.x
     this.body.velocity.z = this.controls.moveVec.z
+
+    if (this.controls.jump) {
+      this.body.velocity.y += 4
+    }
   }
 
   openPortal(color: PortalColor) {
@@ -82,7 +84,6 @@ export class Player implements PhysicalObject {
 
     if (intersects.length != 0) {
       const wall = intersects[0]
-      console.dir(wall)
       if (!wall.object.userData.canAcceptPortals) {
         return
       }
