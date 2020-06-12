@@ -104,7 +104,7 @@ export class Player implements PhysicalObject {
       const pos = intersect.point
       pos.add(intersect.face!.normal.clone().multiplyScalar(0.001))
       const up = new Three.Vector3(0, 1, 0)
-        .applyQuaternion(this.camera.quaternion)
+        .applyQuaternion(this.camera.getWorldQuaternion(new Three.Quaternion()))
         .multiplyScalar(intersect.face!.normal.y)
         .normalize()
       const newPortal = Portal.create(wallData.wall, intersect.point, intersect.face!.normal, up, color)
