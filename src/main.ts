@@ -5,6 +5,7 @@ import { Portal, PortalColor } from "./portal"
 import { Physics } from "./physics"
 import { Player } from "./player"
 import { Hud } from "./hud"
+import { UserData } from "./userdata"
 
 export const scene = new Three.Scene()
 
@@ -16,10 +17,10 @@ renderer.autoClear = false
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.clippingPlanes = [new Three.Plane()]
 
-export const player = new Player(scene)
 export const physics = new Physics()
+export const player = new Player(scene, physics)
 
-player.initPhysics(physics)
+player.initPhysics()
 
 const textureLoader = new Three.TextureLoader()
 Portal.textures = {
@@ -88,14 +89,14 @@ function init() {
   player.controls.install(renderer.domElement)
 
   player.portals[PortalColor.Blue] = Portal.create(
-    <Three.Mesh> scene.children[5],
+    (scene.children[5].userData as UserData).wall!,
     new Three.Vector3(2.5, Portal.Height / 2 - 0.5, -4.999),
     new Three.Vector3(0, 0, 1),
     new Three.Vector3(0, 1, 0),
     PortalColor.Blue
   )
   player.portals[PortalColor.Orange] = Portal.create(
-    <Three.Mesh> scene.children[6],
+    (scene.children[6].userData as UserData).wall!,
     new Three.Vector3(2.5, Portal.Height / 2 - 0.5, 4.999),
     new Three.Vector3(0, 0, -1),
     new Three.Vector3(0, 1, 0),

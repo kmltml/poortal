@@ -1,8 +1,93 @@
 import * as Three from "three"
+import * as Cannon from "@cocos/cannon"
+
 import { Debug } from "./debug"
+import { Physics } from "./physics"
+import { toCannonVec, toThreeVec } from "./utils"
+import { Wall } from "./wall"
 
 export enum PortalColor {
   Orange, Blue
+}
+
+export interface PortalTriggerEvent extends Cannon.IEvent {
+  portal: Portal
+  event: "enter" | "exit"
+}
+
+export class PortalCollisionHandler {
+
+  portalsEntered: boolean[] = [false, false]
+  portals: (Portal | null)[] = []
+
+  constructor(public body: Cannon.Body) {
+    this.updateCollisionGroup()
+    body.addEventListener(Portal.TriggerEventType, (event: PortalTriggerEvent) => {
+      if (event.event === "enter") {
+        this.enterPortal(event.portal)
+      } else if (event.event === "exit") {
+        this.exitPortal(event.portal)
+      }
+      this.updateCollisionGroup()
+    })
+  }
+
+  enterPortal(portal: Portal) {
+    this.portalsEntered[portal.color] = true
+    this.portals[portal.color] = portal
+    this.updateCollisionGroup()
+  }
+
+  exitPortal(portal: Portal) {
+    this.portalsEntered[portal.color] = false
+    this.portals[portal.color] = null
+    this.updateCollisionGroup()
+  }
+
+  updateCollisionGroup() {
+    this.body.collisionFilterGroup =
+      Physics.Groups.Dynamic |
+      (this.portalsEntered.some(x => x) ? 0 : Physics.Groups.Normal) |
+      (this.portalsEntered[PortalColor.Blue] ? Physics.Groups.BluePortalWall : 0) |
+      (this.portalsEntered[PortalColor.Orange] ? Physics.Groups.OrangePortalWall : 0)
+
+    this.body.collisionFilterMask =
+      Physics.Groups.Normal |
+      (this.portalsEntered[PortalColor.Blue] ? 0 : Physics.Groups.BluePortalWall) |
+      (this.portalsEntered[PortalColor.Orange] ? 0 : Physics.Groups.OrangePortalWall)
+  }
+
+  update() {
+    let plane: Three.Plane | undefined = undefined
+    for (let portal of this.portals) {
+      if (!portal) continue
+
+      plane = portal.getClippingPlane(plane)
+      const pos = toThreeVec(this.body.position)
+
+      if (pos.clone().sub(plane.coplanarPoint(new Three.Vector3())).dot(plane.normal) < 0) {
+        // Object is behind portal
+
+        this.portalsEntered[portal.color == PortalColor.Blue ? PortalColor.Orange : PortalColor.Blue] = true
+        this.updateCollisionGroup()
+        console.log("col after portal: ", this.body.collisionFilterGroup)
+
+        pos.applyMatrix4(portal.portalTransform)
+        this.body.position.set(pos.x, pos.y, pos.z)
+
+        const vel = toThreeVec(this.body.velocity)
+        const speed = vel.length()
+
+        vel.transformDirection(portal.portalTransform).multiplyScalar(speed)
+        this.body.velocity.set(vel.x, vel.y, vel.z)
+
+        const quat = new Three.Quaternion()
+        quat.setFromRotationMatrix(portal.portalTransform)
+        this.body.quaternion.mult(new Cannon.Quaternion(quat.x, quat.y, quat.z, quat.w), this.body.quaternion)
+      }
+    }
+  }
+
 }
 
 export class Portal {
@@ -13,7 +98,9 @@ export class Portal {
     mask: Three.Texture
   }
 
-  static create(wall: Three.Mesh, position: Three.Vector3, normal: Three.Vector3, up: Three.Vector3, color: PortalColor): Portal {
+  static TriggerEventType = "portal-trigger"
+
+  static create(wall: Wall, position: Three.Vector3, normal: Three.Vector3, up: Three.Vector3, color: PortalColor): Portal {
     const border = (color == PortalColor.Blue) ? Portal.textures.blueBorder : Portal.textures.orangeBorder
     const portal = new Portal(wall, color, Portal.textures.mask, border)
     portal.mesh.position.copy(position)
@@ -31,7 +118,7 @@ export class Portal {
     return portal
   }
 
-  constructor(public wall: Three.Mesh, public color: PortalColor, mask: Three.Texture, overlay: Three.Texture, ) {
+  constructor(public wall: Wall, public color: PortalColor, mask: Three.Texture, overlay: Three.Texture, ) {
 
     this.renderTexture = new Three.WebGLRenderTarget(window.innerWidth, window.innerHeight)
     this.backTexture = new Three.WebGLRenderTarget(window.innerWidth, window.innerHeight)
@@ -82,11 +169,47 @@ void main() {
     const lightColor = color == PortalColor.Blue ? 0x00bfff : 0xffbd00
     const light = new Three.PointLight(lightColor, 0.3, 3)
     this.mesh.add(light)
+
+    this.trigger = new Cannon.Body({
+      shape: new Cannon.Box(new Cannon.Vec3(Portal.Width / 2, Portal.Height / 2, Portal.TriggerDepth)),
+      type: Cannon.Body.STATIC,
+      collisionFilterMask: Physics.Groups.Dynamic,
+      collisionFilterGroup: Physics.Groups.Normal | Physics.Groups.BluePortalWall | Physics.Groups.OrangePortalWall
+    })
+    this.trigger.shapes[0].collisionResponse = false
+
+    const frameMaterial = new Cannon.Material("portal-frame")
+    frameMaterial.friction = 0
+    frameMaterial.restitution = 0
+    this.frame = new Cannon.Body({
+      type: Cannon.Body.STATIC,
+      material: frameMaterial,
+      collisionFilterMask: this.color == PortalColor.Blue ? Physics.Groups.BluePortalWall : Physics.Groups.OrangePortalWall,
+      collisionFilterGroup: -1
+    })
+    this.frame.addShape(
+      new Cannon.Box(new Cannon.Vec3(Portal.FrameThickness, Portal.Height / 2, Portal.FrameThickness)),
+      new Cannon.Vec3(-Portal.Width / 2 - Portal.FrameThickness, 0, -Portal.FrameThickness)
+    )
+    this.frame.addShape(
+      new Cannon.Box(new Cannon.Vec3(Portal.FrameThickness, Portal.Height / 2, Portal.FrameThickness)),
+      new Cannon.Vec3(Portal.Width / 2 + Portal.FrameThickness, 0, -Portal.FrameThickness)
+    )
+    this.frame.addShape(
+      new Cannon.Box(new Cannon.Vec3(Portal.Width / 2, Portal.FrameThickness, Portal.FrameThickness)),
+      new Cannon.Vec3(0, -Portal.Height / 2 - Portal.FrameThickness, -Portal.FrameThickness)
+    )
+    this.frame.addShape(
+      new Cannon.Box(new Cannon.Vec3(Portal.Width / 2, Portal.FrameThickness, Portal.FrameThickness)),
+      new Cannon.Vec3(0, Portal.Height / 2 + Portal.FrameThickness, -Portal.FrameThickness)
+    )
   }
 
+  static FrameThickness = 0.2
   static Width = 1.0
   static Height = 2.0
   static MaxDepth = 20
+  static TriggerDepth = 0.5
 
   static geometry: Three.Geometry =
       new Three.PlaneGeometry(Portal.Width, Portal.Height)
@@ -96,6 +219,9 @@ void main() {
   backTexture: Three.WebGLRenderTarget
   material: Three.ShaderMaterial
   camera: Three.PerspectiveCamera = new Three.PerspectiveCamera()
+  trigger: Cannon.Body
+  frame: Cannon.Body
+  triggeredBodies: Cannon.Body[] = []
 
   portalTransform: Three.Matrix4 = new Three.Matrix4()
 
@@ -121,8 +247,65 @@ void main() {
   updateCamera(playerCamera: Three.PerspectiveCamera): void {
     this.camera.copy(playerCamera)
     playerCamera.getWorldPosition(this.camera.position)
+    playerCamera.getWorldQuaternion(this.camera.quaternion)
+    this.camera.setRotationFromQuaternion(this.camera.quaternion)
 
     this.camera.applyMatrix4(this.portalTransform)
+  }
+
+  patchPhysics(physics: Physics) {
+    const meshQuaternion = this.mesh.getWorldQuaternion(new Three.Quaternion())
+
+    this.trigger.position.copy(toCannonVec(
+      this.mesh.localToWorld(new Three.Vector3(0, 0, Portal.TriggerDepth))
+    ))
+    this.trigger.quaternion.set(
+      meshQuaternion.x, meshQuaternion.y, meshQuaternion.z, meshQuaternion.w
+    )
+    physics.world.addBody(this.trigger)
+
+    this.frame.position.copy(toCannonVec(this.mesh.getWorldPosition(new Three.Vector3())))
+    this.frame.quaternion.set(
+      meshQuaternion.x, meshQuaternion.y, meshQuaternion.z, meshQuaternion.w
+    )
+    physics.world.addBody(this.frame)
+
+    this.wall.openPortal(this.color)
+
+    this.trigger.shapes[0].addEventListener("triggered", (event: Cannon.ITriggeredEvent) => {
+      if (event.event == "onTriggerEnter") {
+        event.otherBody.dispatchEvent(<PortalTriggerEvent> {
+          type: Portal.TriggerEventType,
+          event: "enter",
+          portal: this,
+          target: event.otherBody
+        })
+
+        this.triggeredBodies.push(event.otherBody)
+
+      } else if (event.event == "onTriggerExit") {
+        event.otherBody.dispatchEvent(<PortalTriggerEvent> {
+          type: Portal.TriggerEventType,
+          event: "exit",
+          portal: this,
+          target: event.otherBody
+        })
+
+        this.triggeredBodies = this.triggeredBodies.filter(b => b !== event.otherBody)
+      }
+    })
+  }
+
+  unpatchPhysics(physics: Physics) {
+    physics.world.remove(this.trigger)
+    physics.world.remove(this.frame)
+    this.wall.closePortal(this.color)
+    this.triggeredBodies.forEach(b => b.dispatchEvent(<PortalTriggerEvent> {
+      type: Portal.TriggerEventType,
+      event: "exit",
+      portal: this,
+      target: b
+    }))
   }
 
 

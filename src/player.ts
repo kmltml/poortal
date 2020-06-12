@@ -5,7 +5,8 @@ import { Controls } from "./controls"
 import { Physics, PhysicalObject } from "./physics"
 import { Debug } from "./debug"
 import { toThreeVec, toCannonVec } from "./utils"
-import { Portal, PortalColor } from "./portal"
+import { Portal, PortalColor, PortalCollisionHandler } from "./portal"
+import { UserData } from "./userdata"
 
 export class Player implements PhysicalObject {
 
@@ -25,10 +26,12 @@ export class Player implements PhysicalObject {
     new Three.Vector3(Player.CollisionRadius, Player.CollisionHeight / 2, Player.CollisionRadius)
   ))
 
-  constructor(public scene: Three.Scene) {
+  portalHandler: PortalCollisionHandler
+
+  constructor(public scene: Three.Scene, public physics: Physics) {
     this.mesh = new Three.Group()
 
-    this.camera = new Three.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 1000)
+    this.camera = new Three.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.01, 1000)
     this.camera.position.set(0, Player.CameraHeight - Player.CollisionHeight / 2, 0)
     this.mesh.add(this.camera)
 
@@ -47,6 +50,9 @@ export class Player implements PhysicalObject {
       shape: new Cannon.Cylinder(Player.CollisionRadius, Player.CollisionRadius, Player.CollisionHeight, 16),
       material: material
     })
+
+    this.portalHandler = new PortalCollisionHandler(this.body)
+    this.portalHandler.updateCollisionGroup()
   }
 
   update() {
@@ -65,6 +71,8 @@ export class Player implements PhysicalObject {
     if (this.controls.jump) {
       this.body.velocity.y += 4
     }
+
+    this.portalHandler.update()
   }
 
   openPortal(color: PortalColor) {
@@ -83,34 +91,47 @@ export class Player implements PhysicalObject {
     }
 
     if (intersects.length != 0) {
-      const wall = intersects[0]
-      if (!wall.object.userData.canAcceptPortals) {
+      const intersect = intersects[0]
+      const wallData = intersect.object.userData as UserData
+      if (!wallData.canAcceptPortals) {
+        return
+      }
+      if (!wallData.wall) {
         return
       }
 
-      const pos = wall.point
-      pos.add(wall.face!.normal.clone().multiplyScalar(0.001))
+      const pos = intersect.point
+      pos.add(intersect.face!.normal.clone().multiplyScalar(0.001))
       const up = new Three.Vector3(0, 1, 0)
         .applyQuaternion(this.camera.quaternion)
-        .multiplyScalar(wall.face!.normal.y)
+        .multiplyScalar(intersect.face!.normal.y)
         .normalize()
-      const newPortal = Portal.create(wall.object as Three.Mesh, wall.point, wall.face!.normal, up, color)
+      const newPortal = Portal.create(wallData.wall, intersect.point, intersect.face!.normal, up, color)
+
       this.scene.remove(this.portals[color].mesh)
+      this.portals[color].unpatchPhysics(this.physics)
+
       this.scene.add(newPortal.mesh)
       this.portals[color] = newPortal
+
+      newPortal.patchPhysics(this.physics)
 
       this.portals[0].otherPortal = this.portals[1]
       this.portals[1].otherPortal = this.portals[0]
     }
   }
 
-  initPhysics(physics: Physics) {
-    physics.add(this)
+  initPhysics() {
+    this.physics.add(this)
   }
 
   synchronizeMesh() {
     const newPos = this.body.position
     this.mesh.position.set(newPos.x, newPos.y, newPos.z)
+    const newQuat = this.body.quaternion
+    this.mesh.setRotationFromQuaternion(
+      new Three.Quaternion(newQuat.x, newQuat.y, newQuat.z, newQuat.w)
+    )
     Debug.instance.player.speed = this.body.velocity.norm()
   }
 

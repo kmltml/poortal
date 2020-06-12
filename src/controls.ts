@@ -104,13 +104,17 @@ export class Controls {
   forwardDirection(): Vector3 {
     const forward = new Vector3(0, 0, 1)
     forward.applyAxisAngle(new Vector3(0, 1, 0), this.orientation.y)
-    return forward
+    forward.transformDirection(this.camera.parent!.matrixWorld)
+    forward.y = 0
+    return forward.normalize()
   }
 
   rightDirection(): Vector3 {
     const right = new Vector3(1, 0, 0)
     right.applyAxisAngle(new Vector3(0, 1, 0), this.orientation.y)
-    return right
+    right.transformDirection(this.camera.parent!.matrixWorld)
+    right.y = 0
+    return right.normalize()
   }
 
   onKeyDown(event: KeyboardEvent): void {

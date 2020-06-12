@@ -2,6 +2,8 @@ import { Vector3, Quaternion, Object3D, BoxGeometry, Mesh, MeshPhysicalMaterial,
 import * as Cannon from "@cocos/cannon"
 
 import { Physics } from "./physics"
+import { Wall } from "./wall"
+import { UserData } from "./userdata"
 
 export interface Level {
 
@@ -28,7 +30,6 @@ export function createLevel(level: Level, root: Object3D, physics: Physics): voi
 
   for (let block of level.blocks) {
     const mesh = new Mesh(blockGeo, blockMaterial)
-    mesh.userData.canAcceptPortals = true
     mesh.scale.copy(block.size)
     mesh.position.copy(block.position)
     mesh.setRotationFromQuaternion(block.rotation)
@@ -43,5 +44,11 @@ export function createLevel(level: Level, root: Object3D, physics: Physics): voi
     })
 
     physics.world.addBody(body)
+
+    const wall = new Wall(mesh, body)
+    mesh.userData = <UserData> {
+      canAcceptPortals: true,
+      wall: wall
+    }
   }
 }

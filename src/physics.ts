@@ -10,6 +10,13 @@ export interface PhysicalObject {
 
 export class Physics {
 
+  static Groups = {
+    Normal: 1,
+    Dynamic: 2,
+    BluePortalWall: 4,
+    OrangePortalWall: 8
+  }
+
   world = new Cannon.World()
 
   private dynamicObjects: PhysicalObject[] = []
@@ -20,6 +27,9 @@ export class Physics {
 
   update() {
     this.world.step(1.0 / 60.0)
+
+    this.world.emitTriggeredEvents()
+    this.world.emitCollisionEvents()
     this.dynamicObjects.forEach(o => o.synchronizeMesh())
   }
 
