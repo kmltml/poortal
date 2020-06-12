@@ -47,9 +47,10 @@ export class Player implements PhysicalObject {
     this.body = new Cannon.Body({
       fixedRotation: true,
       mass: 50,
-      shape: new Cannon.Cylinder(Player.CollisionRadius, Player.CollisionRadius, Player.CollisionHeight, 16),
       material: material
     })
+
+    this.buildCapsule()
 
     this.portalHandler = new PortalCollisionHandler(this.body)
     this.portalHandler.updateCollisionGroup()
@@ -123,6 +124,22 @@ export class Player implements PhysicalObject {
 
   initPhysics() {
     this.physics.add(this)
+  }
+
+  buildCapsule() {
+    this.body.addShape(new Cannon.Cylinder(
+      Player.CollisionRadius, Player.CollisionRadius,
+      Player.CollisionHeight - 2 * Player.CollisionRadius,
+      16
+    ))
+    this.body.addShape(
+      new Cannon.Sphere(Player.CollisionRadius),
+      new Cannon.Vec3(0, -(Player.CollisionHeight / 2 - Player.CollisionRadius), 0)
+    )
+    this.body.addShape(
+      new Cannon.Sphere(Player.CollisionRadius),
+      new Cannon.Vec3(0, Player.CollisionHeight / 2 - Player.CollisionRadius)
+    )
   }
 
   synchronizeMesh() {
