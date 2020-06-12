@@ -13,6 +13,7 @@ export class Player implements PhysicalObject {
   static CameraHeight = 1.5
   static CollisionRadius = 0.3
   static CollisionHeight = 1.7
+  static MaxSpeed = 30.0
 
   mesh: Three.Object3D
   camera: Three.PerspectiveCamera
@@ -71,6 +72,11 @@ export class Player implements PhysicalObject {
 
     if (this.controls.jump) {
       this.body.velocity.y += 4
+    }
+
+    if (this.body.velocity.norm() >= Player.MaxSpeed) {
+      this.body.velocity.normalize()
+      this.body.velocity.mult(Player.MaxSpeed, this.body.velocity)
     }
 
     this.portalHandler.update()
