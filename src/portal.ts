@@ -209,7 +209,7 @@ void main() {
   static Width = 1.0
   static Height = 2.0
   static MaxDepth = 20
-  static TriggerDepth = 0.5
+  static TriggerDepth = 1.0
 
   static geometry: Three.Geometry =
       new Three.PlaneGeometry(Portal.Width, Portal.Height)
@@ -257,7 +257,7 @@ void main() {
     const meshQuaternion = this.mesh.getWorldQuaternion(new Three.Quaternion())
 
     this.trigger.position.copy(toCannonVec(
-      this.mesh.localToWorld(new Three.Vector3(0, 0, Portal.TriggerDepth))
+      this.mesh.localToWorld(new Three.Vector3(0, 0, Portal.TriggerDepth - 0.3))
     ))
     this.trigger.quaternion.set(
       meshQuaternion.x, meshQuaternion.y, meshQuaternion.z, meshQuaternion.w
