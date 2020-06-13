@@ -83,7 +83,8 @@ export class PortalCollisionHandler {
 
         const quat = new Three.Quaternion()
         quat.setFromRotationMatrix(portal.portalTransform)
-        this.body.quaternion.mult(new Cannon.Quaternion(quat.x, quat.y, quat.z, quat.w), this.body.quaternion)
+        const q = new Cannon.Quaternion(quat.x, quat.y, quat.z, quat.w)
+        q.mult(this.body.quaternion, this.body.quaternion)
       }
     }
   }

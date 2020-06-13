@@ -79,7 +79,22 @@ export class Player implements PhysicalObject {
       this.body.velocity.mult(Player.MaxSpeed, this.body.velocity)
     }
 
+    this.fixOrientation()
     this.portalHandler.update()
+  }
+
+  fixOrientation() {
+    const worldUp = new Three.Vector3(0, 1, 0).transformDirection(this.mesh.matrixWorld)
+    let dot = worldUp.dot(new Three.Vector3(0, 1, 0))
+
+    if (dot > 0.999) {
+      this.body.quaternion.x = 0
+      this.body.quaternion.z = 0
+      this.body.angularVelocity.set(0, 0, 0)
+    } else {
+      const axis = new Three.Vector3(0, 1, 0).cross(worldUp).normalize().multiplyScalar(-3.14)
+      this.body.angularVelocity.set(axis.x, axis.y, axis.z)
+    }
   }
 
   openPortal(color: PortalColor) {
