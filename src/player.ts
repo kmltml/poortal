@@ -18,9 +18,12 @@ export class Player implements PhysicalObject {
   mesh: Three.Object3D
   camera: Three.PerspectiveCamera
   body: Cannon.Body
+  legs: Cannon.Shape = new Cannon.Sphere(Player.CollisionRadius)
   controls: Controls
 
   portals: Portal[] = []
+
+  onGround: boolean = false
 
   helper = new Three.Box3Helper(new Three.Box3(
     new Three.Vector3(-Player.CollisionRadius, -Player.CollisionHeight / 2, -Player.CollisionRadius),
@@ -53,12 +56,24 @@ export class Player implements PhysicalObject {
 
     this.buildCapsule()
 
+    this.body.addEventListener("collide", (event: Cannon.ICollisionEvent) => {
+      if (event.selfShape == this.legs) {
+        if (event.event == "onCollisionEnter" || event.event == "onCollisionStay") {
+          this.onGround = true
+        } else if (event.event == "onCollisionExit") {
+          this.onGround = false
+        }
+      }
+    })
+
     this.portalHandler = new PortalCollisionHandler(this.body)
     this.portalHandler.updateCollisionGroup()
   }
 
   update() {
     this.controls.update()
+
+    Debug.instance.player.onGround = this.onGround
 
     if (this.controls.justPressed.left) {
       this.openPortal(PortalColor.Blue)
@@ -67,11 +82,13 @@ export class Player implements PhysicalObject {
       this.openPortal(PortalColor.Orange)
     }
 
-    this.body.velocity.x = this.controls.moveVec.x
-    this.body.velocity.z = this.controls.moveVec.z
+    if (this.onGround) {
+      this.body.velocity.x = this.controls.moveVec.x
+      this.body.velocity.z = this.controls.moveVec.z
 
-    if (this.controls.jump) {
-      this.body.velocity.y += 4
+      if (this.controls.jump) {
+        this.body.velocity.y += 4
+      }
     }
 
     if (this.body.velocity.norm() >= Player.MaxSpeed) {
@@ -154,7 +171,7 @@ export class Player implements PhysicalObject {
       16
     ))
     this.body.addShape(
-      new Cannon.Sphere(Player.CollisionRadius),
+      this.legs,
       new Cannon.Vec3(0, -(Player.CollisionHeight / 2 - Player.CollisionRadius), 0)
     )
     this.body.addShape(

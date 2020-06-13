@@ -17,7 +17,8 @@ export class Debug {
   }
 
   player = {
-    speed: 0.1
+    speed: 0.1,
+    onGround: false
   }
 
   static get instance(): Debug {
@@ -33,6 +34,7 @@ export class Debug {
     this.folders.portalDepth.open()
 
     this.folders.player.add(this.player, "speed").listen()
+    this.folders.player.add(this.player, "onGround").listen()
     this.folders.player.open()
 
     this.gui.show()
