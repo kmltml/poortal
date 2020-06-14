@@ -244,22 +244,28 @@ void main() {
   portalTransform: Three.Matrix4 = new Three.Matrix4()
 
   _otherPortal?: Portal
-  get otherPortal(): Portal {
+  get otherPortal(): Portal | undefined {
     return this._otherPortal!
   }
 
-  set otherPortal(p: Portal) {
+  set otherPortal(p: Portal | undefined) {
     this._otherPortal = p
-    this.mesh.updateMatrixWorld()
-    p.mesh.updateMatrixWorld()
-    this.updatePortalTransform()
+    if (p) {
+      this.mesh.updateMatrixWorld()
+      p.mesh.updateMatrixWorld()
+      this.updatePortalTransform()
+    }
+  }
+
+  get active(): boolean {
+    return this._otherPortal !== undefined
   }
 
   updatePortalTransform() {
     this.portalTransform
       .getInverse(this.mesh.matrixWorld) // To local
       .premultiply(new Three.Matrix4().makeRotationY(Math.PI)) // Rotate to move behind portal
-      .premultiply(this.otherPortal.mesh.matrixWorld) // From local to world
+      .premultiply(this.otherPortal!.mesh.matrixWorld) // From local to world
   }
 
   updateCamera(playerCamera: Three.PerspectiveCamera): void {
@@ -432,9 +438,15 @@ void main() {
       this.swapTargets()
     }
 
-    this.otherPortal.getClippingPlane(renderer.clippingPlanes[0])
-    rec(playerCamera, 0)
-    renderer.setRenderTarget(null) // reset render target
+    if (this.active) {
+      this.otherPortal!.getClippingPlane(renderer.clippingPlanes[0])
+      rec(playerCamera, 0)
+      renderer.setRenderTarget(null) // reset render target
+    } else {
+      renderer.setRenderTarget(this.backTexture)
+      renderer.clear()
+      renderer.setRenderTarget(null)
+    }
 
   }
 

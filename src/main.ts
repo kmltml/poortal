@@ -88,26 +88,6 @@ function init() {
 
   player.controls.install(renderer.domElement)
 
-  player.portals[PortalColor.Blue] = Portal.create(
-    (scene.children[5].userData as UserData).wall!,
-    new Three.Vector3(2.5, Portal.Height / 2 - 0.5, -4.999),
-    new Three.Vector3(0, 0, 1),
-    new Three.Vector3(0, 1, 0),
-    PortalColor.Blue
-  )
-  player.portals[PortalColor.Orange] = Portal.create(
-    (scene.children[6].userData as UserData).wall!,
-    new Three.Vector3(2.5, Portal.Height / 2 - 0.5, 4.999),
-    new Three.Vector3(0, 0, -1),
-    new Three.Vector3(0, 1, 0),
-    PortalColor.Orange
-  )
-  player.portals[0].otherPortal = player.portals[1]
-  player.portals[1].otherPortal = player.portals[0]
-
-  scene.add(player.portals[0].mesh)
-  scene.add(player.portals[1].mesh)
-
   renderFrame()
 }
 
@@ -121,7 +101,9 @@ function renderFrame() {
   renderer.clear()
 
   for (let portal of player.portals) {
-    portal.render(player.camera, scene, renderer)
+    if (portal) {
+      portal.render(player.camera, scene, renderer)
+    }
   }
 
   // Thankfully zero normal is treated as "Don't clip anything",

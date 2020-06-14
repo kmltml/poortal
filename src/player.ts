@@ -21,7 +21,7 @@ export class Player implements PhysicalObject {
   legs: Cannon.Shape = new Cannon.Sphere(Player.CollisionRadius)
   controls: Controls
 
-  portals: Portal[] = []
+  portals: (Portal | undefined)[] = []
 
   onGround: boolean = false
 
@@ -120,13 +120,13 @@ export class Player implements PhysicalObject {
 
     if (this.portals[color]) {
       // Allow slight repositioning of portals
-      this.portals[color].mesh.layers.disable(0)
+      this.portals[color]!.mesh.layers.disable(0)
     }
 
     const intersects = caster.intersectObjects(this.scene.children)
 
     if (this.portals[color]) {
-      this.portals[color].mesh.layers.enable(0)
+      this.portals[color]!.mesh.layers.enable(0)
     }
 
     if (intersects.length != 0) {
@@ -147,16 +147,22 @@ export class Player implements PhysicalObject {
         .normalize()
       const newPortal = Portal.create(wallData.wall, intersect.point, intersect.face!.normal, up, color)
 
-      this.scene.remove(this.portals[color].mesh)
-      this.portals[color].unpatchPhysics(this.physics)
+      if (this.portals[color]) {
+        this.scene.remove(this.portals[color]!.mesh)
+        this.portals[color]!.unpatchPhysics(this.physics)
+      }
 
       this.scene.add(newPortal.mesh)
       this.portals[color] = newPortal
 
       newPortal.patchPhysics(this.physics)
 
-      this.portals[0].otherPortal = this.portals[1]
-      this.portals[1].otherPortal = this.portals[0]
+      if (this.portals[0]) {
+        this.portals[0].otherPortal = this.portals[1]
+      }
+      if (this.portals[1]) {
+        this.portals[1].otherPortal = this.portals[0]
+      }
     }
   }
 
