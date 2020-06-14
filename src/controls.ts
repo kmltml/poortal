@@ -1,10 +1,13 @@
 import { Camera, Vector3, Vector2, Euler, MathUtils } from "three"
 
+import { Debug } from "./debug"
+
 export class Controls {
 
   orientation: Euler = new Euler(0, 0, 0, "ZYX")
   camera: Camera
   speed = 3.0
+  mouseSensitivity = 0.01
   canvas: HTMLElement | null = null
 
   pointerLocked = false
@@ -47,6 +50,8 @@ export class Controls {
 
   constructor(camera: Camera) {
     this.camera = camera
+    Debug.instance.folders.controls.add(this, "speed")
+    Debug.instance.folders.controls.add(this, "mouseSensitivity", 0.001, 0.02)
   }
 
   install(canvas: HTMLElement): void {
@@ -84,7 +89,7 @@ export class Controls {
     this.moveVec.copy(this.forwardDirection().multiplyScalar(posChange.y));
     this.moveVec.add(this.rightDirection().multiplyScalar(posChange.x))
 
-    this.mouseDelta.multiplyScalar(0.01)
+    this.mouseDelta.multiplyScalar(this.mouseSensitivity)
 
     this.orientation.y -= this.mouseDelta.x
 

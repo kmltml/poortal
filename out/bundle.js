@@ -22,6 +22,7 @@ var poortal = (function (exports, three, cannon, dat) {
 	    constructor() {
 	        this.gui = new dat.GUI();
 	        this.folders = {
+	            controls: this.gui.addFolder("Controls"),
 	            portalDepth: this.gui.addFolder("Portal Depth"),
 	            player: this.gui.addFolder("Player")
 	        };
@@ -33,6 +34,7 @@ var poortal = (function (exports, three, cannon, dat) {
 	            speed: 0.1,
 	            onGround: false
 	        };
+	        this.folders.controls.open();
 	        this.folders.portalDepth.add(this.portalDepth, "blue").listen();
 	        this.folders.portalDepth.add(this.portalDepth, "orange").listen();
 	        this.folders.portalDepth.open();
@@ -584,10 +586,12 @@ void main() {
 	var controls = createCommonjsModule(function (module, exports) {
 	Object.defineProperty(exports, "__esModule", { value: true });
 
+
 	class Controls {
 	    constructor(camera) {
 	        this.orientation = new three.Euler(0, 0, 0, "ZYX");
 	        this.speed = 3.0;
+	        this.mouseSensitivity = 0.01;
 	        this.canvas = null;
 	        this.pointerLocked = false;
 	        this.keys = {
@@ -619,6 +623,8 @@ void main() {
 	        this.reset = false;
 	        this.mouseDelta = new three.Vector2();
 	        this.camera = camera;
+	        debug.Debug.instance.folders.controls.add(this, "speed");
+	        debug.Debug.instance.folders.controls.add(this, "mouseSensitivity", 0.001, 0.02);
 	    }
 	    install(canvas) {
 	        window.addEventListener("keydown", event => this.onKeyDown(event));
@@ -649,7 +655,7 @@ void main() {
 	        posChange.multiplyScalar(this.speed);
 	        this.moveVec.copy(this.forwardDirection().multiplyScalar(posChange.y));
 	        this.moveVec.add(this.rightDirection().multiplyScalar(posChange.x));
-	        this.mouseDelta.multiplyScalar(0.01);
+	        this.mouseDelta.multiplyScalar(this.mouseSensitivity);
 	        this.orientation.y -= this.mouseDelta.x;
 	        this.orientation.x -= this.mouseDelta.y;
 	        this.orientation.x = three.MathUtils.clamp(this.orientation.x, -Math.PI / 2, Math.PI / 2);
