@@ -149,13 +149,16 @@ export class Player implements PhysicalObject {
         return
       }
 
+      const normal = intersect.face!.normal.clone()
+      normal.transformDirection(intersect.object.matrixWorld)
+
       const pos = intersect.point
       pos.add(intersect.face!.normal.clone().multiplyScalar(0.001))
       const up = new Three.Vector3(0, 1, 0)
         .applyQuaternion(this.camera.getWorldQuaternion(new Three.Quaternion()))
-        .multiplyScalar(intersect.face!.normal.y)
+        .multiplyScalar(normal.y)
         .normalize()
-      const newPortal = Portal.create(wallData.wall, intersect.point, intersect.face!.normal, up, color)
+      const newPortal = Portal.create(wallData.wall, intersect.point, normal, up, color)
 
       if (this.portals[color]) {
         this.scene.remove(this.portals[color]!.mesh)
