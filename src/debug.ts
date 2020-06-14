@@ -7,6 +7,7 @@ export class Debug {
   gui: dat.GUI = new dat.GUI()
 
   folders = {
+    controls: this.gui.addFolder("Controls"),
     portalDepth: this.gui.addFolder("Portal Depth"),
     player: this.gui.addFolder("Player")
   }
@@ -29,6 +30,8 @@ export class Debug {
   }
 
   constructor() {
+    this.folders.controls.open()
+
     this.folders.portalDepth.add(this.portalDepth, "blue").listen()
     this.folders.portalDepth.add(this.portalDepth, "orange").listen()
     this.folders.portalDepth.open()
