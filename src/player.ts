@@ -165,13 +165,13 @@ export class Player implements PhysicalObject {
       this.scene.add(newPortal.mesh)
       this.portals[color] = newPortal
 
-      newPortal.patchPhysics(this.physics)
-
       if (this.portals[0]) {
         this.portals[0].otherPortal = this.portals[1]
+        this.portals[0].patchPhysics(this.physics)
       }
       if (this.portals[1]) {
         this.portals[1].otherPortal = this.portals[0]
+        this.portals[1].patchPhysics(this.physics)
       }
     }
   }

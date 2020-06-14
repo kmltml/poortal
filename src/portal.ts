@@ -77,7 +77,7 @@ export class PortalCollisionHandler {
   update() {
     let plane: Three.Plane | undefined = undefined
     for (let portal of this.portals) {
-      if (!portal) continue
+      if (!portal || !portal.active) continue
 
       plane = portal.getClippingPlane(plane)
       const pos = toThreeVec(this.body.position)
@@ -243,6 +243,8 @@ void main() {
 
   portalTransform: Three.Matrix4 = new Three.Matrix4()
 
+  physicsPatched: boolean = false
+
   _otherPortal?: Portal
   get otherPortal(): Portal | undefined {
     return this._otherPortal!
@@ -278,6 +280,11 @@ void main() {
   }
 
   patchPhysics(physics: Physics) {
+    if (this.physicsPatched || !this.active) {
+      return // Nothing to do
+    }
+    this.physicsPatched = true
+
     const meshQuaternion = this.mesh.getWorldQuaternion(new Three.Quaternion())
 
     this.trigger.position.copy(toCannonVec(
@@ -323,6 +330,9 @@ void main() {
   }
 
   unpatchPhysics(physics: Physics) {
+    if (!this.physicsPatched) {
+      return
+    }
     physics.world.remove(this.trigger)
     physics.world.remove(this.frame)
     this.wall.closePortal(this.color)
