@@ -29,7 +29,7 @@ Portal.textures = {
   orangeBorder: textureLoader.load("tex/portal_orange.png")
 }
 
-export const hud = new Hud(renderer, textureLoader)
+export const hud = new Hud(player, renderer, textureLoader)
 
 declare var Stats: any
 
