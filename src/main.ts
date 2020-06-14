@@ -1,11 +1,11 @@
 import * as Three from "three"
 
 import { Level, createLevel } from "./level"
-import { Portal, PortalColor } from "./portal"
+import { Portal } from "./portal"
 import { Physics } from "./physics"
 import { Player } from "./player"
 import { Hud } from "./hud"
-import { UserData } from "./userdata"
+import { initLevel } from "./init-level"
 
 export const scene = new Three.Scene()
 
@@ -37,54 +37,21 @@ const stats = new Stats()
 stats.showPanel(0)
 document.body.appendChild(stats.dom)
 
-const initialLevel: Level = {
-  startPosition: new Three.Vector3(-2, 1, 0),
-  blocks: [{
-    size: new Three.Vector3(10, 1, 10),
-    position: new Three.Vector3(0, -1, 0),
-    rotation: new Three.Quaternion()
-  }, {
-    size: new Three.Vector3(10, 1, 10),
-    position: new Three.Vector3(0, 3, 0),
-    rotation: new Three.Quaternion()
-  }, {
-    size: new Three.Vector3(10, 5, 1),
-    position: new Three.Vector3(0, 1, -5.5),
-    rotation: new Three.Quaternion()
-  }, {
-    size: new Three.Vector3(10, 5, 1),
-    position: new Three.Vector3(0, 1, 5.5),
-    rotation: new Three.Quaternion()
-  }, {
-    size: new Three.Vector3(1, 5, 10),
-    position: new Three.Vector3(-5.5, 1, 0),
-    rotation: new Three.Quaternion()
-  }, {
-    size: new Three.Vector3(1, 5, 10),
-    position: new Three.Vector3(5.5, 1, 0),
-    rotation: new Three.Quaternion()
-  }, {
-    size: new Three.Vector3(1, 5, 5),
-    position: new Three.Vector3(0, 1, 0),
-    rotation: new Three.Quaternion()
-  }]
-}
-
 function init() {
   document.body.appendChild(renderer.domElement)
 
   scene.add(new Three.AmbientLight(0xffffff, 0.1))
 
   const pointLight = new Three.PointLight(0xffffff, 0.5)
-  pointLight.position.set(-4, 2, -4)
+  pointLight.position.set(-4, 5, -4)
   scene.add(pointLight)
 
   const pointLight2 = new Three.PointLight(0xffffff, 0.5)
-  pointLight2.position.set(4, 2, 4)
+  pointLight2.position.set(4, 5, 4)
   scene.add(pointLight2)
 
-  player.setPosition(initialLevel.startPosition)
-  createLevel(initialLevel, scene, physics)
+  player.setPosition(initLevel.startPosition)
+  createLevel(initLevel, scene, physics)
 
   player.controls.install(renderer.domElement)
 

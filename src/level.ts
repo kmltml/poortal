@@ -1,4 +1,4 @@
-import { Vector3, Quaternion, Object3D, BoxGeometry, Mesh, MeshPhysicalMaterial, MeshPhongMaterial } from "three"
+import { Vector3, Euler, Object3D, BoxGeometry, Mesh, MeshPhysicalMaterial, MeshPhongMaterial } from "three"
 import * as Cannon from "@cocos/cannon"
 
 import { Physics } from "./physics"
@@ -15,7 +15,8 @@ export interface Level {
 export interface Block {
   size: Vector3
   position: Vector3
-  rotation: Quaternion
+  rotation?: Euler
+  portalProof?: boolean
 }
 
 export function createLevel(level: Level, root: Object3D, physics: Physics): void {
@@ -23,16 +24,22 @@ export function createLevel(level: Level, root: Object3D, physics: Physics): voi
     color: 0xdddddd,
     roughness: 0.5,
   })
+  const portalProofMaterial = new MeshPhysicalMaterial({
+    color: 0xaa9999,
+    roughness: 0.2,
+  })
   const blockGeo = new BoxGeometry(1, 1, 1)
 
   const physMaterial = new Cannon.Material("wall")
   physMaterial.friction = 0
 
   for (let block of level.blocks) {
-    const mesh = new Mesh(blockGeo, blockMaterial)
+    const mesh = new Mesh(blockGeo, block.portalProof ? portalProofMaterial : blockMaterial)
     mesh.scale.copy(block.size)
     mesh.position.copy(block.position)
-    mesh.setRotationFromQuaternion(block.rotation)
+    if (block.rotation) {
+      mesh.setRotationFromEuler(block.rotation)
+    }
     root.add(mesh)
 
     const body = new Cannon.Body({
@@ -42,12 +49,15 @@ export function createLevel(level: Level, root: Object3D, physics: Physics): voi
       position: new Cannon.Vec3(block.position.x, block.position.y, block.position.z),
       material: physMaterial
     })
+    if (block.rotation) {
+      body.quaternion.setFromEuler(block.rotation.x, block.rotation.y, block.rotation.z)
+    }
 
     physics.world.addBody(body)
 
     const wall = new Wall(mesh, body)
     mesh.userData = <UserData> {
-      canAcceptPortals: true,
+      canAcceptPortals: !block.portalProof,
       wall: wall
     }
   }
