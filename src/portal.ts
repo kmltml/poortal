@@ -12,6 +12,7 @@ export enum PortalColor {
 
 export interface PortalTriggerEvent extends Cannon.IEvent {
   portal: Portal
+  shape?: Cannon.Shape
   event: "enter" | "exit"
 }
 
@@ -20,28 +21,44 @@ export class PortalCollisionHandler {
   portalsEntered: boolean[] = [false, false]
   portals: (Portal | null)[] = []
 
+  triggeredShapes: Cannon.Shape[][] = [[], []]
+
   constructor(public body: Cannon.Body) {
     this.updateCollisionGroup()
     body.addEventListener(Portal.TriggerEventType, (event: PortalTriggerEvent) => {
       if (event.event === "enter") {
-        this.enterPortal(event.portal)
+        this.enterPortal(event.portal, event.shape)
       } else if (event.event === "exit") {
-        this.exitPortal(event.portal)
+        this.exitPortal(event.portal, event.shape)
       }
       this.updateCollisionGroup()
     })
   }
 
-  enterPortal(portal: Portal) {
-    this.portalsEntered[portal.color] = true
-    this.portals[portal.color] = portal
-    this.updateCollisionGroup()
+  enterPortal(portal: Portal, shape?: Cannon.Shape) {
+    if (shape === undefined || this.triggeredShapes[portal.color].indexOf(shape) == -1) {
+      if (shape !== undefined) {
+        this.triggeredShapes[portal.color].push(shape)
+      }
+      this.portalsEntered[portal.color] = true
+      this.portals[portal.color] = portal
+      this.updateCollisionGroup()
+    }
   }
 
-  exitPortal(portal: Portal) {
-    this.portalsEntered[portal.color] = false
-    this.portals[portal.color] = null
-    this.updateCollisionGroup()
+  exitPortal(portal: Portal, shape?: Cannon.Shape) {
+    const index = shape === undefined ? -1 : this.triggeredShapes[portal.color].indexOf(shape)
+    if (index != -1 || shape === undefined) {
+      if (shape !== undefined) {
+        this.triggeredShapes[portal.color].splice(index, 1)
+      }
+      if (this.triggeredShapes.length > 0 || shape === undefined) {
+        this.portalsEntered[portal.color] = false
+        this.portals[portal.color] = null
+        this.triggeredShapes[portal.color].splice(0, this.triggeredShapes[portal.color].length)
+        this.updateCollisionGroup()
+      }
+    }
   }
 
   updateCollisionGroup() {
@@ -274,12 +291,13 @@ void main() {
     this.wall.openPortal(this.color)
 
     this.trigger.shapes[0].addEventListener("triggered", (event: Cannon.ITriggeredEvent) => {
-      if (event.event == "onTriggerEnter") {
+      if (event.event == "onTriggerEnter" || event.event == "onTriggerStay") {
         event.otherBody.dispatchEvent(<PortalTriggerEvent> {
           type: Portal.TriggerEventType,
           event: "enter",
           portal: this,
-          target: event.otherBody
+          shape: event.otherShape,
+          target: event.otherBody,
         })
 
         this.triggeredBodies.push(event.otherBody)
@@ -289,6 +307,7 @@ void main() {
           type: Portal.TriggerEventType,
           event: "exit",
           portal: this,
+          shape: event.otherShape,
           target: event.otherBody
         })
 
