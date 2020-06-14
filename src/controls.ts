@@ -14,11 +14,13 @@ export class Controls {
     back: false,
     left: false,
     right: false,
-    jump: false
+    jump: false,
+    reset: false
   }
 
   private previousKeys = {
-    jump: false
+    jump: false,
+    reset: false
   }
 
   private buttons = {
@@ -39,6 +41,7 @@ export class Controls {
   moveVec: Vector3 = new Vector3()
 
   jump: boolean = false
+  reset: boolean = false
 
   private mouseDelta: Vector2 = new Vector2()
 
@@ -94,6 +97,9 @@ export class Controls {
     this.jump = this.keys.jump && !this.previousKeys.jump
     this.previousKeys.jump = this.keys.jump
 
+    this.reset = this.keys.reset && !this.previousKeys.reset
+    this.previousKeys.reset = this.keys.reset
+
     this.justPressed.left = this.buttons.left && !this.previousButtons.left
     this.justPressed.right = this.buttons.right && !this.previousButtons.right
 
@@ -135,6 +141,9 @@ export class Controls {
       case " ":
         this.keys.jump = true
         break
+      case "r":
+        this.keys.reset = true
+        break
     }
   }
 
@@ -155,6 +164,9 @@ export class Controls {
         break
       case " ":
         this.keys.jump = false
+        break
+      case "r":
+        this.keys.reset = false
         break
     }
   }
@@ -200,6 +212,8 @@ export class Controls {
       this.keys.back = false
       this.keys.left = false
       this.keys.right = false
+      this.keys.jump = false
+      this.keys.reset = false
     }
   }
 

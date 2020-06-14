@@ -91,6 +91,16 @@ export class Player implements PhysicalObject {
       }
     }
 
+    if (this.controls.reset) {
+      for (let color of [PortalColor.Blue, PortalColor.Orange]) {
+        if (this.portals[color]) {
+          this.scene.remove(this.portals[color]!.mesh)
+          this.portals[color]!.unpatchPhysics(this.physics)
+          this.portals[color] = undefined
+        }
+      }
+    }
+
     if (this.body.velocity.norm() >= Player.MaxSpeed) {
       this.body.velocity.normalize()
       this.body.velocity.mult(Player.MaxSpeed, this.body.velocity)
