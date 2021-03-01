@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@cocos/cannon": "^1.1.0",
-    "three": "^0.116.1"
+    "three": "^0.125.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.1.0",
